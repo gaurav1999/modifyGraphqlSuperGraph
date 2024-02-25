@@ -16,8 +16,7 @@ import { ParseIntPipe } from '@nestjs/common';
 export class PostsResolver {
   constructor(private readonly postsService: PostsService) {}
 
-  @Directive('@deprecated(reason: "This query will be removed in the next version")')
-  @Query((returns) => Post)
+  @Query((returns) => Post, { deprecationReason: "Deperacted", description: "internal" })
   internalResolver_postModified(@Args({ name: 'id', type: () => ID }, ParseIntPipe) id: number): Post {
     return this.postsService.findOne(id);
   }

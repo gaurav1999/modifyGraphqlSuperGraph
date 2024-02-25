@@ -12,11 +12,10 @@ class CustomIntrospectClass extends IntrospectAndCompose {
   async initialize({ update, getDataSource, healthCheck }: SupergraphSdlHookOptions): Promise<{ supergraphSdl: string; cleanup: () => Promise<void>; }> {
     const { supergraphSdl, cleanup } = await super.initialize({ update, getDataSource, healthCheck });
     // const schema = parseGraphQLSDL(null,supergraphSdl, { });
-    // console.log(supergraphSdl);
+    console.log(supergraphSdl);
     const modifiedSchemaString = supergraphSdl.split('\n')
-    .filter(line => !line.includes('internalResolver_'))
+    .filter(line => !line.includes('@deprecated'))
     .join('\n');
-
     return {
       supergraphSdl: modifiedSchemaString,
       cleanup
