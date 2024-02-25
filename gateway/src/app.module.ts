@@ -11,7 +11,6 @@ class CustomIntrospectClass extends IntrospectAndCompose {
 
   async initialize({ update, getDataSource, healthCheck }: SupergraphSdlHookOptions): Promise<{ supergraphSdl: string; cleanup: () => Promise<void>; }> {
     const { supergraphSdl, cleanup } = await super.initialize({ update, getDataSource, healthCheck });
-    console.log(supergraphSdl);
     // const schema = parseGraphQLSDL(null,supergraphSdl, { });
     // console.log(supergraphSdl);
     const modifiedSchemaString = supergraphSdl.split('\n')
