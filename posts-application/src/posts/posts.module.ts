@@ -9,9 +9,8 @@ import { PostsResolver } from './posts.resolver';
 import { PostsService } from './posts.service';
 import { UsersResolver } from './users.resolver';
 import { ApolloServerPluginInlineTrace } from '@apollo/server/plugin/inlineTrace';
+import { DirectiveLocation, GraphQLDirective } from 'graphql';
 // import { DirectiveLocation, GraphQLDirective, buildASTSchema } from 'graphql';
-import { printSchema, parse } from 'graphql';
-import { mapSchema, MapperKind, removeObjectFields } from '@graphql-tools/utils';
 
 @Module({
   imports: [
@@ -32,6 +31,10 @@ import { mapSchema, MapperKind, removeObjectFields } from '@graphql-tools/utils'
       },
       buildSchemaOptions: {
         orphanedTypes: [User],
+        directives: [ new GraphQLDirective({
+          name: 'internal',
+          locations: [DirectiveLocation.QUERY]
+        })]
       },
     }),
   ],

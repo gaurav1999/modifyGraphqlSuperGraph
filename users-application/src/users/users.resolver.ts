@@ -1,4 +1,4 @@
-import { Args, ID, Query, Resolver, ResolveReference } from '@nestjs/graphql';
+import { Args, ID, Mutation, Query, Resolver, ResolveReference } from '@nestjs/graphql';
 import { User } from './models/user.model';
 import { UsersService } from './users.service';
 
@@ -8,6 +8,11 @@ export class UsersResolver {
 
   @Query((returns) => User)
   getUser(@Args({ name: 'id', type: () => ID }) id: number): User {
+    return this.usersService.findById(id);
+  }
+
+  @Mutation((returns) => User, {  })
+  constructUser(@Args({ name: 'id', type: () => ID }) id: number): User {
     return this.usersService.findById(id);
   }
 

@@ -16,12 +16,13 @@ import { ParseIntPipe } from '@nestjs/common';
 export class PostsResolver {
   constructor(private readonly postsService: PostsService) {}
 
-  @Query((returns) => Post, { deprecationReason: "Deperacted", description: "internal" })
+  @Directive('@deprecated(reason: "This query will be removed in the next version")')
+  @Query((returns) => Post, { description: "gateway-default-internal" })
   internalResolver_postModified(@Args({ name: 'id', type: () => ID }, ParseIntPipe) id: number): Post {
     return this.postsService.findOne(id);
   }
 
-  @Query((returns) => [Post])
+  @Query((returns) => [Post], { description: "gateway-exposed" })
   posts(): Post[] {
     return this.postsService.findAll();
   }
