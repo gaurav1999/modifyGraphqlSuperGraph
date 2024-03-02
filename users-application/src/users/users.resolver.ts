@@ -6,12 +6,12 @@ import { UsersService } from './users.service';
 export class UsersResolver {
   constructor(private usersService: UsersService) {}
 
-  @Query((returns) => User)
+  @Query((returns) => User, { description: "@gateway(default)" })
   getUser(@Args({ name: 'id', type: () => ID }) id: number): User {
     return this.usersService.findById(id);
   }
 
-  @Mutation((returns) => User, {  })
+  @Mutation((returns) => User, { description: "@gateway(internal)" })
   constructUser(@Args({ name: 'id', type: () => ID }) id: number): User {
     return this.usersService.findById(id);
   }

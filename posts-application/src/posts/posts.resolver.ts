@@ -17,12 +17,12 @@ export class PostsResolver {
   constructor(private readonly postsService: PostsService) {}
 
   @Directive('@deprecated(reason: "This query will be removed in the next version")')
-  @Query((returns) => Post, { description: "gateway-default-internal" })
+  @Query((returns) => Post, { description: "@gateway(internal)" })
   internalResolver_postModified(@Args({ name: 'id', type: () => ID }, ParseIntPipe) id: number): Post {
     return this.postsService.findOne(id);
   }
 
-  @Query((returns) => [Post], { description: "gateway-exposed" })
+  @Query((returns) => [Post], { description: "@gateway(exposed)" })
   posts(): Post[] {
     return this.postsService.findAll();
   }

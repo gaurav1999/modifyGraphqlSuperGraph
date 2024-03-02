@@ -9,7 +9,29 @@ import { parseGraphQLSDL } from '@graphql-tools/utils';
 import { print, Kind, DefinitionNode, SchemaDefinitionNode } from 'graphql';
 
 
+
 class CustomIntrospectClass extends IntrospectAndCompose {
+
+  private validateExposureAndSanitizeDescription(description: string) {
+    const data = { expose: false, field: description };
+    if(!description) return data;
+    const gatewayName = process.env.GATEWAY_NAME || 'default';
+    const pattern = /@gateway\((.*?)\)/;
+    const match = description.match(pattern);
+    if(!match) return data;
+    //Remove the pattern to be returned back;
+    data.field = description.replace(pattern, '');
+    const extractedFields = match ? match[1] : null;
+    if(extractedFields.length) {
+      const allowedOptions = extractedFields.split(',');
+      if(allowedOptions.includes(gatewayName) || allowedOptions.includes('exposed')) {
+        data.expose = true;
+        return data;
+      }
+    }
+    return data;
+
+  }
 
 
   async initialize({ update, getDataSource, healthCheck }: SupergraphSdlHookOptions): Promise<{ supergraphSdl: string; cleanup: () => Promise<void>; }> {
@@ -38,7 +60,13 @@ class CustomIntrospectClass extends IntrospectAndCompose {
         if(node.name.value === 'Query' || node.name.value === 'Mutation') {
           const fields = [];
           node.fields.forEach(item => {
-            if(item?.description?.value.includes('exposed')) fields.push(item);
+            const { expose, field } = this.validateExposureAndSanitizeDescription(item?.description?.value);
+            if(expose) {
+              fields.push({
+                ...item,
+                description: { kind: Kind.STRING, value: field }
+              })
+            }
           })
         if(!fields.length) {
           //If we don't have any mutation or query we need to remove from schema.
@@ -61,20 +89,12 @@ class CustomIntrospectClass extends IntrospectAndCompose {
       operationTypes: Object.values(resolverMap)
     })
 
-    //Printing schema updated..... --->
-    console.log(print({ kind: Kind.DOCUMENT, definitions: filteredDefinitions }));
-
     
     return { 
       supergraphSdl: print({ kind: Kind.DOCUMENT, definitions: filteredDefinitions }), 
       cleanup
     } ;
     
-    // Reconstruct the schema string with filtered queries
-    // const filteredSchemaString = print({
-    //   kind: 'Document',
-    //   definitions: filteredQueries
-    // });
     
     const modifiedSchemaString = supergraphSdl.split('\n')
     .filter(line => !line.includes('@deprecated'))
