@@ -10,10 +10,22 @@ import { PostsService } from './posts.service';
 import { UsersResolver } from './users.resolver';
 import { ApolloServerPluginInlineTrace } from '@apollo/server/plugin/inlineTrace';
 import { DirectiveLocation, GraphQLDirective } from 'graphql';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ApiToken } from '../api-token/entities/api-token.entity';
 // import { DirectiveLocation, GraphQLDirective, buildASTSchema } from 'graphql';
 
 @Module({
   imports: [
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.POSTGRES_HOST || 'localhost',
+      port: 5432,
+      username: process.env.POSTGRES_USER || 'myuser',
+      password: process.env.POSTGRES_PASSWORD || 'mypassword',
+      database: process.env.TOKEN_DB || 'skuad_token',
+      entities: [ApiToken],
+      synchronize: true,
+    }),
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
       autoSchemaFile: true,

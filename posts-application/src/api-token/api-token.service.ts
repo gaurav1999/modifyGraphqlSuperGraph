@@ -84,6 +84,7 @@ export class ApiTokenService {
         const accessKey = createHmac('sha512', this.API_TOKEN_SALT).update(apiToken).digest('hex');
         const data = await this.apiTokenRepository.findOne({ where: { accessKey, deletedAt: null } });
         if (!data) throw new AuthenticationError("Invalid Api Token");
+        if(data.expiresAt.getTime() < new Date().getTime()) throw new AuthenticationError("Token Expired");
         return this.decryptJwtToken(data.jwtToken, apiToken);
     }
 

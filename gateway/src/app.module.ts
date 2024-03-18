@@ -17,7 +17,7 @@ export enum GATEWAY_VISIBILITY_CONTROL  {
 }
 
 
-class CustomIntrospectClass extends IntrospectAndCompose {
+class InternalGraphIntrospectClass extends IntrospectAndCompose {
 
   private validateRegex(regexString: string): string {
     try {
@@ -157,7 +157,7 @@ class CustomIntrospectClass extends IntrospectAndCompose {
     GraphQLModule.forRoot<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
       gateway: {
-        supergraphSdl: new CustomIntrospectClass({
+        supergraphSdl: new InternalGraphIntrospectClass({
             subgraphs: [
               { name: 'users', url: 'http://localhost:3002/graphql',  },
               { name: 'posts', url: 'http://localhost:3003/graphql' },
