@@ -5,18 +5,27 @@ import { ApiToken, ExpiryTokenInput } from './entities/api-token.entity';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHmac, createCipher, createDecipher } from 'crypto';
 import { AuthenticationError } from '@nestjs/apollo';
+import { JwtService } from '@nestjs/jwt';
 
+
+
+  
 @Injectable()
-export class ApiTokenService {
+export class ApiTokenServiceNest {
     private API_TOKEN_SALT: string
+    private JWT_TOKEN_SECRET: string
+
     constructor(
         @InjectRepository(ApiToken)
         private readonly apiTokenRepository: Repository<ApiToken>,
         private configService: ConfigService,
+        private jwtService: JwtService,
 
     ) {
         this.API_TOKEN_SALT = this.configService.get<string>('API_TOKEN_SALT');
+        this.JWT_TOKEN_SECRET = this.configService.get<string>('JWT_TOKEN_SECRET');
         if (!this.API_TOKEN_SALT) throw new Error("API_TOKEN_SALT Required");
+        if(!this.JWT_TOKEN_SECRET) throw new Error("JWT_TOKEN_STRING Required");
     }
 
     private encryptJwtToken(jwtToken: string, apiToken: string) {
@@ -34,9 +43,16 @@ export class ApiTokenService {
         return decrypted;
     }
 
-    private async generateJwtTokenFromAclService(userId: string, legalEntityId: string) {
-        //Mocking this;
-        return 'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6IkphdmFJblVzZSIsImV4cCI6MTcxMDc0OTg4MywiaWF0IjoxNzEwNzQ5ODgzfQ.r5K-__Eq46Ubjztm9VUZIXUOvM8Cb4me3UWbbl8kJgs';
+    private async generateJwtTokenFromAclService(userId: string, legalEntityId: string, expiresAt: Date) {
+        const payload = {
+            userId,
+            legalEntityId,
+            clientType: 'API_TOKEN',
+            iat: Date.now(),
+        }
+        if(expiresAt) payload['exp'] = expiresAt.getTime();
+        const token = this.jwtService.sign(payload, { secret: this.JWT_TOKEN_SECRET });
+        return token;
     }
 
 
@@ -45,13 +61,10 @@ export class ApiTokenService {
         //32 as we have fixed the api token to be of length 64.
         const apiToken = randomBytes(32).toString('hex');
         const accessKey = createHmac('sha512', this.API_TOKEN_SALT).update(apiToken).digest('hex');
-        const token = await this.generateJwtTokenFromAclService(userId, legalEntityId);
-        const encryptedJwtToken = this.encryptJwtToken(token, apiToken);
         const data = this.apiTokenRepository.create({
             accessKey,
             userId,
             legalEntityId,
-            jwtToken: encryptedJwtToken,
             permissionGroupId: '5525e5a8-4981-45cf-8e89-5193ceef5283', //TODO: Change this later
 
         });
@@ -76,6 +89,9 @@ export class ApiTokenService {
             }
             data.expiresAt = currentDate;
         }
+        const token = await this.generateJwtTokenFromAclService(userId, legalEntityId, data.expiresAt);
+        const encryptedJwtToken = this.encryptJwtToken(token, apiToken);
+        data.jwtToken = encryptedJwtToken;
         await this.apiTokenRepository.save(data);
         return apiToken;
     }
